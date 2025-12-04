@@ -7,7 +7,7 @@
 // If using npm: const QrScanner = require('qr-scanner');
 // If using CDN: QrScanner is available globally
 
-const AttendanceModule = (function() {
+const AttendanceModule = (function () {
     let beaconInterval = null;
     let currentSessionId = null;
     let scanner = null;
@@ -17,6 +17,27 @@ const AttendanceModule = (function() {
      */
     function init() {
         setupEventListeners();
+        checkUrlForManualCheckIn();
+    }
+
+    /**
+     * Check URL for manual check-in parameters (token & mode)
+     */
+    function checkUrlForManualCheckIn() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const mode = urlParams.get('mode');
+
+        if (token && mode) {
+            console.log('Manual check-in token detected');
+            const useLinkTokenBtn = document.getElementById('useLinkToken');
+            if (useLinkTokenBtn) {
+                useLinkTokenBtn.style.display = 'block';
+                useLinkTokenBtn.addEventListener('click', function () {
+                    handleQRResult(token, mode, null);
+                });
+            }
+        }
     }
 
     /**
@@ -52,7 +73,7 @@ const AttendanceModule = (function() {
         try {
             // Request geolocation
             const position = await getCurrentPosition();
-            
+
             // Initialize QR scanner
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
@@ -94,7 +115,7 @@ const AttendanceModule = (function() {
     async function handleJoinRemote() {
         try {
             const position = await getCurrentPosition();
-            
+
             // For remote, we need to get the session ID from URL or prompt
             const sessionId = prompt('Enter session ID:');
             if (!sessionId) {
@@ -129,11 +150,12 @@ const AttendanceModule = (function() {
             }
 
             const response = await axios.post('/attendance/check-in', checkInData);
-            
+
             if (response.data.attendance) {
                 currentSessionId = response.data.attendance.training_session_id;
                 showStatus('Checked in successfully!', 'success');
                 startBeacons(currentSessionId);
+                showKeywordSection();
             }
         } catch (error) {
             console.error('Check-in error:', error);
@@ -226,7 +248,7 @@ const AttendanceModule = (function() {
                 canvas.width = video.videoWidth;
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
                 const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                
+
                 try {
                     const code = jsQR(imageData.data, imageData.width, imageData.height);
 
@@ -243,12 +265,12 @@ const AttendanceModule = (function() {
         }
 
         // Start video stream
-        navigator.mediaDevices.getUserMedia({ 
-            video: { 
+        navigator.mediaDevices.getUserMedia({
+            video: {
                 facingMode: 'environment',
                 width: { ideal: 1280 },
                 height: { ideal: 720 }
-            } 
+            }
         })
             .then(stream => {
                 video.srcObject = stream;
@@ -264,7 +286,7 @@ const AttendanceModule = (function() {
 
         // Store scanning state for stop function
         scanner = {
-            stop: function() {
+            stop: function () {
                 scanning = false;
                 if (video.srcObject) {
                     video.srcObject.getTracks().forEach(track => track.stop());
@@ -359,7 +381,7 @@ const AttendanceModule = (function() {
 
         const alertClass = `alert alert-${type}`;
         statusDiv.innerHTML = `<div class="${alertClass}">${message}</div>`;
-        
+
         // Auto-hide after 5 seconds
         setTimeout(() => {
             statusDiv.innerHTML = '';

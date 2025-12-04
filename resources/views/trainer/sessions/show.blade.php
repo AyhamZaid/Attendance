@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,6 +14,7 @@
             border-radius: 8px;
             margin-bottom: 20px;
         }
+
         .keyword-display {
             font-size: 2rem;
             font-weight: bold;
@@ -24,6 +26,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container mt-5">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -78,64 +81,37 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Load QRCode library - using jsDelivr which is more reliable -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" onerror="loadQRCodeFallback()"></script>
+    <!-- Load QRCode library from local assets -->
+    <script src="{{ asset('js/qrcode.min.js') }}"></script>
     <script>
-        // Fallback loader if primary CDN fails
-        function loadQRCodeFallback() {
-            console.warn('Primary CDN failed, trying fallback...');
-            var script = document.createElement('script');
-            script.src = 'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js';
-            script.onerror = function() {
-                console.error('Fallback CDN also failed, trying alternative...');
-                var script2 = document.createElement('script');
-                script2.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js';
-                script2.onload = function() {
-                    console.log('QRCode loaded from alternative version');
-                    initQRCodes();
-                };
-                script2.onerror = function() {
-                    console.error('All CDN sources failed');
-                    document.querySelectorAll('.qr-code-container').forEach(function(container) {
-                        container.innerHTML = '<p class="text-danger">Failed to load QR Code library. Please check your internet connection.</p>';
-                    });
-                };
-                document.head.appendChild(script2);
-            };
-            script.onload = function() {
-                console.log('QRCode loaded from fallback CDN');
-                initQRCodes();
-            };
-            document.head.appendChild(script);
-        }
-        
+
         // Generate QR codes for all containers
         function generateQRCodes() {
             if (typeof QRCode === 'undefined') {
                 console.error('QRCode library not available');
-                document.querySelectorAll('.qr-code-container').forEach(function(container) {
+                document.querySelectorAll('.qr-code-container').forEach(function (container) {
                     container.innerHTML = '<p class="text-danger">QR Code library not available</p>';
                 });
                 return;
             }
-            
-            document.querySelectorAll('.qr-code-container').forEach(function(container) {
+
+            document.querySelectorAll('.qr-code-container').forEach(function (container) {
                 var token = container.getAttribute('data-token');
                 var mode = container.getAttribute('data-mode');
-                
+
                 if (!token) {
                     console.error('Token is missing for mode:', mode);
                     container.innerHTML = '<p class="text-danger">Token is missing</p>';
                     return;
                 }
-                
+
                 console.log('Generating QR code for mode:', mode);
-                
+
                 // Create a canvas element
                 var canvas = document.createElement('canvas');
                 container.innerHTML = ''; // Clear any existing content
                 container.appendChild(canvas);
-                
+
                 try {
                     QRCode.toCanvas(canvas, token, {
                         width: 300,
@@ -158,37 +134,37 @@
                 }
             });
         }
-        
+
         // Initialize QR codes - check if library is already loaded
         function initQRCodes() {
             if (typeof QRCode !== 'undefined') {
                 generateQRCodes();
             } else {
                 // Wait a bit for library to load
-                setTimeout(function() {
+                setTimeout(function () {
                     if (typeof QRCode !== 'undefined') {
                         generateQRCodes();
                     } else {
                         console.error('QRCode library not available after waiting');
-                        document.querySelectorAll('.qr-code-container').forEach(function(container) {
+                        document.querySelectorAll('.qr-code-container').forEach(function (container) {
                             container.innerHTML = '<p class="text-danger">QR Code library not loaded. Please refresh the page.</p>';
                         });
                     }
                 }, 500);
             }
         }
-        
+
         // Initialize when DOM is ready
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 setTimeout(initQRCodes, 100);
             });
         } else {
             setTimeout(initQRCodes, 100);
         }
-        
+
         // Keyword challenge button
-        document.getElementById('generateKeyword').addEventListener('click', function() {
+        document.getElementById('generateKeyword').addEventListener('click', function () {
             fetch('{{ route("trainer.sessions.challenge", $session->id) }}', {
                 method: 'POST',
                 headers: {
@@ -196,14 +172,14 @@
                     'Content-Type': 'application/json',
                 },
             })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('keywordDisplay').textContent = data.keyword;
-                document.getElementById('keywordDisplay').style.display = 'block';
-            })
-            .catch(error => console.error('Error:', error));
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('keywordDisplay').textContent = data.keyword;
+                    document.getElementById('keywordDisplay').style.display = 'block';
+                })
+                .catch(error => console.error('Error:', error));
         });
     </script>
 </body>
-</html>
 
+</html>

@@ -46,7 +46,7 @@ Route::middleware(['auth:lms'])->group(function () {
         // Redirect to first session
         return redirect()->route('trainer.sessions.show', $sessions->first()->id);
     })->name('trainer.sessions.index');
-    
+
     Route::get('/trainer/sessions/{session}', [App\Http\Controllers\TrainerSessionController::class, 'show'])
         ->name('trainer.sessions.show');
     Route::post('/trainer/sessions/{session}/challenge', [App\Http\Controllers\TrainerSessionController::class, 'challenge'])
@@ -69,3 +69,10 @@ Route::middleware(['auth:lms', 'risk.context'])->group(function () {
 Route::get('/trainee/checkin', function () {
     return view('trainee.checkin');
 })->name('trainee.checkin');
+
+// QR Code Test Route
+Route::get('/test-qr', function () {
+    return view('test-qr');
+});
+
+
